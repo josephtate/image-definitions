@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src
 from image_definitions.main import app
 
 
-def generate_openapi_spec():
+def generate_openapi_spec() -> Path:
     """Generate and save the OpenAPI specification."""
     spec = app.openapi()
 
@@ -26,7 +26,7 @@ def generate_openapi_spec():
     return spec_path
 
 
-def generate_python_client():
+def generate_python_client() -> bool:
     """Generate Python client from OpenAPI spec using openapi-generator."""
     spec_path = generate_openapi_spec()
     client_dir = Path(__file__).parent.parent / "client" / "python"
@@ -110,7 +110,7 @@ with image_definitions_client.ApiClient(configuration) as api_client:
         return False
 
 
-def generate_typescript_client():
+def generate_typescript_client() -> bool:
     """Generate TypeScript client from OpenAPI spec."""
     spec_path = generate_openapi_spec()
     client_dir = Path(__file__).parent.parent / "client" / "typescript"
@@ -149,7 +149,7 @@ def generate_typescript_client():
         return False
 
 
-def main():
+def main() -> None:
     """Main function."""
     print("Generating OpenAPI clients for Image Definitions API...")
 

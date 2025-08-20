@@ -49,7 +49,7 @@ jobs:
       run: poetry run flake8 .
     
     - name: Run mypy (type checking)
-      run: poetry run mypy src/image_definitions --ignore-missing-imports
+      run: poetry run mypy src/image_definitions scripts --ignore-missing-imports
 
   test:
     runs-on: ubuntu-latest

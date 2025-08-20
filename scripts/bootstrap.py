@@ -21,7 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from image_definitions.core.database import AsyncSessionLocal
-from image_definitions.models import Product, ProductGroup, Variant
+from image_definitions.models import Architecture, Product, ProductGroup, Variant
 
 console = Console()
 
@@ -29,11 +29,16 @@ console = Console()
 class ConfigBootstrapper:
     """Bootstrap data from unified-config.yml into the database."""
 
-    def __init__(self, config_file: Path = Path("unified-config.yml"), verbose: bool = False, blacklist: list = None):
+    def __init__(
+        self,
+        config_file: Path = Path("unified-config.yml"),
+        verbose: bool = False,
+        blacklist: Optional[List[str]] = None,
+    ):
         self.config_file = config_file
         self.verbose = verbose
         self.blacklist = [item.lower() for item in blacklist or ["CIQ-Kernel", "sig-cloud-next"]]
-        self.config = {}
+        self.config: Dict[str, Any] = {}
         self.stats = {
             "product_groups_created": 0,
             "products_created": 0,
@@ -45,7 +50,7 @@ class ConfigBootstrapper:
         # Configure logging based on verbose flag
         self._setup_logging()
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """Setup logging configuration based on verbose flag."""
         if not self.verbose:
             # Suppress SQLAlchemy INFO logging
@@ -70,7 +75,7 @@ class ConfigBootstrapper:
             console.print(f"[red]Error parsing YAML file: {e}[/red]")
             sys.exit(1)
 
-    async def show_preview(self):
+    async def show_preview(self) -> None:
         """Show a preview of what will be created."""
         if "product_groups" not in self.config:
             console.print("[yellow]No product_groups found in configuration[/yellow]")
@@ -114,7 +119,7 @@ class ConfigBootstrapper:
         console.print(table)
 
     async def create_product_group(
-        self, session: AsyncSession, name: str, description: str = None
+        self, session: AsyncSession, name: str, description: Optional[str] = None
     ) -> Optional[ProductGroup]:
         """Create a product group if it doesn't exist."""
         try:
@@ -147,8 +152,8 @@ class ConfigBootstrapper:
         session: AsyncSession,
         name: str,
         product_group: ProductGroup,
-        version: str = None,
-        description: str = None,
+        version: Optional[str] = None,
+        description: Optional[str] = None,
     ) -> Optional[Product]:
         """Create a product if it doesn't exist."""
         try:
@@ -189,21 +194,38 @@ class ConfigBootstrapper:
         self, session: AsyncSession, product: Product, arches: List[str], product_data: Dict[str, Any]
     ) -> List[Variant]:
         """Create variants for different architectures."""
-        variants = []
+        variants: List[Variant] = []
 
         for arch in arches:
             try:
-                # Check if variant exists
+                # First find or create Architecture
                 result = await session.execute(
-                    select(Variant).where(Variant.product_id == product.id, Variant.architecture == arch)
+                    select(Architecture).where(Architecture.product_id == product.id, Architecture.name == arch)
                 )
-                existing = result.scalar_one_or_none()
+                architecture = result.scalar_one_or_none()
 
-                if existing:
+                if not architecture:
+                    # Create new architecture
+                    architecture = Architecture(
+                        name=arch,
+                        display_name=arch.replace("_", " ").title(),
+                        description=f"{arch} architecture for {product.name}",
+                        product_id=product.id,
+                    )
+                    session.add(architecture)
+                    await session.flush()  # Get ID for the architecture
+
+                # Check if variant exists for this architecture
+                variant_result = await session.execute(
+                    select(Variant).where(Variant.architecture_id == architecture.id)
+                )
+                existing_variant = variant_result.scalar_one_or_none()
+
+                if existing_variant:
                     if self.verbose:
                         console.print(f"[yellow]Variant '{product.name}-{arch}' already exists, skipping[/yellow]")
                     self.stats["skipped"] += 1
-                    variants.append(existing)
+                    variants.append(existing_variant)
                     continue
 
                 # Create build config from YAML data
@@ -218,9 +240,8 @@ class ConfigBootstrapper:
                 variant = Variant(
                     name=f"{product.name}-{arch}",
                     description=f"{product.name} for {arch} architecture",
-                    architecture=arch,
                     build_config=build_config if build_config else None,
-                    product_id=product.id,
+                    architecture_id=architecture.id,
                 )
                 session.add(variant)
                 await session.flush()
@@ -235,7 +256,7 @@ class ConfigBootstrapper:
 
         return variants
 
-    async def process_product_groups(self, session: AsyncSession):
+    async def process_product_groups(self, session: AsyncSession) -> None:
         """Process all product groups and products from the config."""
         if "product_groups" not in self.config:
             console.print("[yellow]No product_groups found in configuration[/yellow]")
@@ -300,7 +321,7 @@ class ConfigBootstrapper:
 
                 progress.advance(task)
 
-    async def bootstrap(self, force: bool = False):
+    async def bootstrap(self, force: bool = False) -> None:
         """Main bootstrap method."""
         console.print("[bold blue]🚀 Image Definitions Bootstrap[/bold blue]")
         console.print()
@@ -339,7 +360,7 @@ class ConfigBootstrapper:
         # Show summary
         self.show_summary()
 
-    def show_summary(self):
+    def show_summary(self) -> None:
         """Show a summary of what was created."""
         console.print()
         console.print("[bold]📊 Bootstrap Summary:[/bold]")
@@ -373,7 +394,7 @@ class ConfigBootstrapper:
             console.print("[yellow]No new items were created. Data may already exist.[/yellow]")
 
 
-async def main():
+async def main() -> None:
     """Main function."""
     import argparse
 

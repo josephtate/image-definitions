@@ -13,6 +13,7 @@ from ..schemas import ProductGroupCreate, ProductGroupUpdate
 router = APIRouter()
 
 
+@router.get("", response_model=List[ProductGroupSchema])
 @router.get("/", response_model=List[ProductGroupSchema])
 async def list_product_groups(
     skip: int = Query(0, ge=0, description="Number of items to skip"),

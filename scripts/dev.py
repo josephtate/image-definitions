@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 
-def run_migrations():
+def run_migrations() -> bool:
     """Run database migrations."""
     print("🔄 Running database migrations...")
     try:
@@ -22,7 +22,7 @@ def run_migrations():
     return True
 
 
-def create_initial_migration():
+def create_initial_migration() -> bool:
     """Create initial migration if migrations directory is empty."""
     versions_dir = Path("migrations/versions")
     if versions_dir.exists() and any(versions_dir.glob("*.py")):
@@ -41,7 +41,7 @@ def create_initial_migration():
         return False
 
 
-def start_server():
+def start_server() -> None:
     """Start the development server."""
     print("🚀 Starting development server...")
     try:
@@ -65,7 +65,7 @@ def start_server():
         print("❌ Server failed to start")
 
 
-def run_tests():
+def run_tests() -> bool:
     """Run the test suite."""
     print("🧪 Running tests...")
     try:
@@ -77,7 +77,7 @@ def run_tests():
     return True
 
 
-def run_linting():
+def run_linting() -> bool:
     """Run code linting and formatting checks."""
     print("🔍 Running linting checks...")
 
@@ -100,7 +100,7 @@ def run_linting():
     return all_passed
 
 
-def fix_formatting():
+def fix_formatting() -> None:
     """Fix code formatting."""
     print("🔧 Fixing code formatting...")
     try:
@@ -111,7 +111,7 @@ def fix_formatting():
         print("❌ Failed to fix formatting")
 
 
-def generate_openapi_spec():
+def generate_openapi_spec() -> None:
     """Generate OpenAPI specification."""
     print("📋 Generating OpenAPI specification...")
     try:
@@ -121,7 +121,7 @@ def generate_openapi_spec():
         print("❌ Failed to generate OpenAPI specification")
 
 
-def run_bootstrap():
+def run_bootstrap() -> None:
     """Run the bootstrap script to load initial data."""
     print("🚀 Running bootstrap to load initial data...")
     try:
@@ -133,7 +133,7 @@ def run_bootstrap():
         print("\n👋 Bootstrap cancelled by user")
 
 
-def main():
+def main() -> None:
     """Main function."""
     if len(sys.argv) < 2:
         print("Image Definitions Development Script")

@@ -60,6 +60,9 @@ COPY --chown=app:app migrations/ ./migrations/
 # Install the application
 RUN pip install -e .
 
+# Create the database and run migrations during build
+RUN python -m alembic upgrade head
+
 # Switch to app user
 USER app
 
