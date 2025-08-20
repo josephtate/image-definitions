@@ -1,0 +1,118 @@
+[tool.poetry]
+name = "image-definitions"
+version = "0.1.0"
+description = "Linux System Image Build Tracking Database and UI"
+authors = ["Platform Team"]
+readme = "README.md"
+packages = [{include = "image_definitions", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+sqlalchemy = "^2.0.0"
+alembic = "^1.12.0"
+pydantic = "^2.4.0"
+pydantic-settings = "^2.0.0"
+configargparse = "^1.7"
+python-multipart = "^0.0.6"
+aiosqlite = "^0.19.0"
+psycopg2-binary = "^2.9.7"
+httpx = "^0.25.0"
+rich = "^13.7.0"
+pyyaml = "^6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+pytest-cov = "^4.1.0"
+httpx = "^0.25.0"
+black = "^23.0.0"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+mypy = "^1.5.0"
+safety = "^2.3.0"
+bandit = "^1.7.0"
+flake8-pyproject = "^1.2.0"
+
+[tool.poetry.scripts]
+image-definitions = "image_definitions.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ["py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | \.direnv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.flake8]
+max-line-length = 120
+ignore = [
+    "E501",  # Line too long, configured in black
+    "W503",  # Line break occurred before a binary operator (black default)
+    "E402",  # Module level import not at top of file (conflicts with isort)
+    ]
+exclude = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    ".direnv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "migrations/versions",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["image_definitions"]
+known_third_party = ["fastapi", "uvicorn", "sqlalchemy", "alembic", "pydantic", "httpx"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=image_definitions"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["image_definitions"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: image-definitions
+  labels:
+    name: image-definitions
+    app.kubernetes.io/name: image-definitions
+    app.kubernetes.io/component: namespace

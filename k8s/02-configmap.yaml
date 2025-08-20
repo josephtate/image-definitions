@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-definitions-config
+  namespace: image-definitions
+  labels:
+    app.kubernetes.io/name: image-definitions
+    app.kubernetes.io/component: config
+data:
+  # Application configuration
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  LOG_LEVEL: "info"
+  DEBUG: "false"
+  
+  # Database configuration (SQLite by default)
+  DATABASE_URL: "sqlite:///./data/image_definitions.db"
+  
+  # For PostgreSQL, uncomment and configure these:
+  # DATABASE_URL: "postgresql://image_definitions:password@postgres:5432/image_definitions"
+  
+  # CORS configuration
+  CORS_ORIGINS: '["*"]'  # Restrict in production
+  
+  # API configuration
+  API_PREFIX: "/api"

@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: image-definitions
+  namespace: image-definitions
+  labels:
+    app.kubernetes.io/name: image-definitions
+    app.kubernetes.io/component: ingress
+  annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # TLS configuration - uncomment for HTTPS
+  # tls:
+  # - hosts:
+  #   - image-definitions.your-domain.com
+  #   secretName: image-definitions-tls
+  rules:
+  - host: image-definitions.your-domain.com  # Update with your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: image-definitions
+            port:
+              number: 80
