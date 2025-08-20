@@ -1,5 +1,6 @@
 # Multi-stage build for Python FastAPI application
-FROM python:3.11-slim as builder
+FROM python:3.13-alpine AS builder
+
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -8,10 +9,9 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache \
+    build-base \
+    curl
 
 # Install Poetry
 RUN pip install poetry==1.7.1
@@ -26,10 +26,12 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies
-RUN poetry install --only=main --no-root && rm -rf $POETRY_CACHE_DIR
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --only=main --no-root && \
+    rm -rf $POETRY_CACHE_DIR
 
 # Production stage
-FROM python:3.11-slim as production
+FROM python:3.13-alpine AS production
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -37,19 +39,19 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH"
 
 # Install system dependencies for runtime
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk add --no-cache \
+    libpq
 
 # Create app user
-RUN groupadd --gid 1000 app \
-    && useradd --uid 1000 --gid app --shell /bin/bash --create-home app
+RUN addgroup -g 1000 app \
+    && adduser -u 1000 -G app -s /bin/sh -D app
 
 # Copy virtual environment from builder stage
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 
 # Copy application code
 WORKDIR /app
+COPY --chown=app:app pyproject.toml README.md ./
 COPY --chown=app:app src/ ./src/
 COPY --chown=app:app static/ ./static/
 COPY --chown=app:app alembic.ini ./
