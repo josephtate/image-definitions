@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Optional, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
@@ -17,12 +17,12 @@ router = APIRouter()
 async def list_artifacts(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    variant_id: int = Query(None, description="Filter by variant ID"),
-    artifact_type: ArtifactType = Query(None, description="Filter by artifact type"),
-    status: ArtifactStatus = Query(None, description="Filter by status"),
-    region: str = Query(None, description="Filter by region"),
+    variant_id: Optional[int] = Query(None, description="Filter by variant ID"),
+    artifact_type: Optional[ArtifactType] = Query(None, description="Filter by artifact type"),
+    status: Optional[ArtifactStatus] = Query(None, description="Filter by status"),
+    region: Optional[str] = Query(None, description="Filter by region"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Sequence[Artifact]:
     """List all artifacts with optional filtering."""
     query = select(Artifact).offset(skip).limit(limit).order_by(Artifact.created_at.desc())
 
@@ -43,7 +43,7 @@ async def list_artifacts(
 
 
 @router.get("/{artifact_id}", response_model=ArtifactSchema)
-async def get_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)):
+async def get_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)) -> Artifact:
     """Get a specific artifact by ID."""
     result = await db.execute(select(Artifact).where(Artifact.id == artifact_id))
     artifact = result.scalar_one_or_none()
@@ -55,7 +55,7 @@ async def get_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/", response_model=ArtifactSchema, status_code=201)
-async def create_artifact(artifact: ArtifactCreate, db: AsyncSession = Depends(get_db)):
+async def create_artifact(artifact: ArtifactCreate, db: AsyncSession = Depends(get_db)) -> Artifact:
     """Create a new artifact."""
     # Verify variant exists
     result = await db.execute(select(Variant).where(Variant.id == artifact.variant_id))
@@ -71,7 +71,9 @@ async def create_artifact(artifact: ArtifactCreate, db: AsyncSession = Depends(g
 
 
 @router.patch("/{artifact_id}", response_model=ArtifactSchema)
-async def update_artifact(artifact_id: int, artifact_update: ArtifactUpdate, db: AsyncSession = Depends(get_db)):
+async def update_artifact(
+    artifact_id: int, artifact_update: ArtifactUpdate, db: AsyncSession = Depends(get_db)
+) -> Artifact:
     """Update an existing artifact."""
     result = await db.execute(select(Artifact).where(Artifact.id == artifact_id))
     db_artifact = result.scalar_one_or_none()
@@ -97,7 +99,7 @@ async def update_artifact(artifact_id: int, artifact_update: ArtifactUpdate, db:
 
 
 @router.delete("/{artifact_id}")
-async def delete_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Delete an artifact."""
     result = await db.execute(select(Artifact).where(Artifact.id == artifact_id))
     db_artifact = result.scalar_one_or_none()
@@ -112,7 +114,7 @@ async def delete_artifact(artifact_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/stats/summary")
-async def get_artifact_stats(db: AsyncSession = Depends(get_db)):
+async def get_artifact_stats(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     """Get summary statistics for artifacts."""
     # Count by type
     type_counts = await db.execute(

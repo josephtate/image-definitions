@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 class Base(DeclarativeBase):
     """Base class for all models with common columns."""
 
-    @declared_attr
+    @declared_attr  # type: ignore[arg-type]
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
 

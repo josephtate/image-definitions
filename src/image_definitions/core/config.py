@@ -1,8 +1,7 @@
 from typing import Optional
 
 import configargparse
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -27,7 +26,7 @@ class Settings(BaseSettings):
     saml_enabled: bool = False
     saml_metadata_url: Optional[str] = None
 
-    model_config = ConfigDict(env_file=".env", case_sensitive=False)
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 
 def get_settings() -> Settings:

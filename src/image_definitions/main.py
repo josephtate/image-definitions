@@ -1,4 +1,5 @@
 import os
+from typing import Any, Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,7 +46,7 @@ def create_app() -> FastAPI:
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     @app.get("/")
-    async def serve_frontend():
+    async def serve_frontend() -> Any:
         """Serve the main HTML UI."""
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         static_dir = os.path.join(project_root, "static")
@@ -55,7 +56,7 @@ def create_app() -> FastAPI:
         return {"message": "Image Definitions API", "docs": "/docs"}
 
     @app.get("/health")
-    async def health_check():
+    async def health_check() -> Dict[str, str]:
         """Health check endpoint."""
         return {"status": "healthy", "version": "0.1.0"}
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -16,9 +16,9 @@ router = APIRouter()
 async def list_architectures(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    product_id: int = Query(None, description="Filter by product ID"),
+    product_id: Optional[int] = Query(None, description="Filter by product ID"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Sequence[Architecture]:
     """List all architectures, optionally filtered by product."""
     query = select(Architecture).offset(skip).limit(limit).order_by(Architecture.created_at.desc())
 
@@ -30,7 +30,7 @@ async def list_architectures(
 
 
 @router.get("/{architecture_id}", response_model=ArchitectureSchema)
-async def get_architecture(architecture_id: int, db: AsyncSession = Depends(get_db)):
+async def get_architecture(architecture_id: int, db: AsyncSession = Depends(get_db)) -> Architecture:
     """Get a specific architecture by ID."""
     result = await db.execute(select(Architecture).where(Architecture.id == architecture_id))
     architecture = result.scalar_one_or_none()
@@ -42,7 +42,7 @@ async def get_architecture(architecture_id: int, db: AsyncSession = Depends(get_
 
 
 @router.post("/", response_model=ArchitectureSchema, status_code=201)
-async def create_architecture(architecture: ArchitectureCreate, db: AsyncSession = Depends(get_db)):
+async def create_architecture(architecture: ArchitectureCreate, db: AsyncSession = Depends(get_db)) -> Architecture:
     """Create a new architecture."""
     # Verify product exists
     result = await db.execute(select(Product).where(Product.id == architecture.product_id))
@@ -60,7 +60,7 @@ async def create_architecture(architecture: ArchitectureCreate, db: AsyncSession
 @router.patch("/{architecture_id}", response_model=ArchitectureSchema)
 async def update_architecture(
     architecture_id: int, architecture_update: ArchitectureUpdate, db: AsyncSession = Depends(get_db)
-):
+) -> Architecture:
     """Update an existing architecture."""
     result = await db.execute(select(Architecture).where(Architecture.id == architecture_id))
     db_architecture = result.scalar_one_or_none()
@@ -86,7 +86,7 @@ async def update_architecture(
 
 
 @router.delete("/{architecture_id}")
-async def delete_architecture(architecture_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_architecture(architecture_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Delete an architecture and all its variants."""
     result = await db.execute(select(Architecture).where(Architecture.id == architecture_id))
     db_architecture = result.scalar_one_or_none()

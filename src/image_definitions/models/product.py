@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 class Product(Base):
     """A specific image product within a product group."""
 
-    __tablename__ = "products"
+    __tablename__ = "products"  # type: ignore[assignment]
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     version: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     # Foreign key

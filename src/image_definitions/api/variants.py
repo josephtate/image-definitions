@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -16,9 +16,9 @@ router = APIRouter()
 async def list_variants(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    architecture_id: int = Query(None, description="Filter by architecture ID"),
+    architecture_id: Optional[int] = Query(None, description="Filter by architecture ID"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Sequence[Variant]:
     """List all variants, optionally filtered by architecture."""
     query = select(Variant).offset(skip).limit(limit).order_by(Variant.created_at.desc())
 
@@ -30,7 +30,7 @@ async def list_variants(
 
 
 @router.get("/{variant_id}", response_model=VariantSchema)
-async def get_variant(variant_id: int, db: AsyncSession = Depends(get_db)):
+async def get_variant(variant_id: int, db: AsyncSession = Depends(get_db)) -> Variant:
     """Get a specific variant by ID."""
     result = await db.execute(select(Variant).where(Variant.id == variant_id))
     variant = result.scalar_one_or_none()
@@ -42,7 +42,7 @@ async def get_variant(variant_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/", response_model=VariantSchema, status_code=201)
-async def create_variant(variant: VariantCreate, db: AsyncSession = Depends(get_db)):
+async def create_variant(variant: VariantCreate, db: AsyncSession = Depends(get_db)) -> Variant:
     """Create a new variant."""
     # Verify architecture exists
     result = await db.execute(select(Architecture).where(Architecture.id == variant.architecture_id))
@@ -58,7 +58,7 @@ async def create_variant(variant: VariantCreate, db: AsyncSession = Depends(get_
 
 
 @router.patch("/{variant_id}", response_model=VariantSchema)
-async def update_variant(variant_id: int, variant_update: VariantUpdate, db: AsyncSession = Depends(get_db)):
+async def update_variant(variant_id: int, variant_update: VariantUpdate, db: AsyncSession = Depends(get_db)) -> Variant:
     """Update an existing variant."""
     result = await db.execute(select(Variant).where(Variant.id == variant_id))
     db_variant = result.scalar_one_or_none()
@@ -84,7 +84,7 @@ async def update_variant(variant_id: int, variant_update: VariantUpdate, db: Asy
 
 
 @router.delete("/{variant_id}")
-async def delete_variant(variant_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_variant(variant_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Delete a variant and all its artifacts."""
     result = await db.execute(select(Variant).where(Variant.id == variant_id))
     db_variant = result.scalar_one_or_none()

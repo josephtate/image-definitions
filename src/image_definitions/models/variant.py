@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 class Variant(Base):
     """A specific configuration variant of a product."""
 
-    __tablename__ = "variants"
+    __tablename__ = "variants"  # type: ignore[assignment]
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     build_config: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # Build configuration parameters
 
     # Foreign key

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List, Optional, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -16,9 +16,9 @@ router = APIRouter()
 async def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    product_group_id: int = Query(None, description="Filter by product group ID"),
+    product_group_id: Optional[int] = Query(None, description="Filter by product group ID"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Sequence[Product]:
     """List all products, optionally filtered by product group."""
     query = select(Product).offset(skip).limit(limit).order_by(Product.created_at.desc())
 
@@ -30,7 +30,7 @@ async def list_products(
 
 
 @router.get("/{product_id}", response_model=ProductSchema)
-async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
+async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Product:
     """Get a specific product by ID."""
     result = await db.execute(select(Product).where(Product.id == product_id))
     product = result.scalar_one_or_none()
@@ -42,7 +42,7 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/", response_model=ProductSchema, status_code=201)
-async def create_product(product: ProductCreate, db: AsyncSession = Depends(get_db)):
+async def create_product(product: ProductCreate, db: AsyncSession = Depends(get_db)) -> Product:
     """Create a new product."""
     # Verify product group exists
     result = await db.execute(select(ProductGroup).where(ProductGroup.id == product.product_group_id))
@@ -58,7 +58,7 @@ async def create_product(product: ProductCreate, db: AsyncSession = Depends(get_
 
 
 @router.patch("/{product_id}", response_model=ProductSchema)
-async def update_product(product_id: int, product_update: ProductUpdate, db: AsyncSession = Depends(get_db)):
+async def update_product(product_id: int, product_update: ProductUpdate, db: AsyncSession = Depends(get_db)) -> Product:
     """Update an existing product."""
     result = await db.execute(select(Product).where(Product.id == product_id))
     db_product = result.scalar_one_or_none()
@@ -84,7 +84,7 @@ async def update_product(product_id: int, product_update: ProductUpdate, db: Asy
 
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Delete a product and all its variants."""
     result = await db.execute(select(Product).where(Product.id == product_id))
     db_product = result.scalar_one_or_none()

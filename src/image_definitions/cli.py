@@ -2,6 +2,7 @@
 """Command-line interface for Image Definitions."""
 
 import sys
+from typing import Any, Dict, Optional, Union
 
 import configargparse
 import httpx
@@ -16,13 +17,13 @@ console = Console()
 class ImageDefinitionsClient:
     """CLI client for Image Definitions API."""
 
-    def __init__(self, base_url: str = None, timeout: int = 30):
+    def __init__(self, base_url: Optional[str] = None, timeout: int = 30):
         # Get settings for default values
         cli_settings = parse_cli_args()
         self.base_url = base_url or f"http://{cli_settings.host}:{cli_settings.port}"
         self.client = httpx.Client(base_url=f"{self.base_url}/api", timeout=timeout)
 
-    def _request(self, method: str, endpoint: str, **kwargs):
+    def _request(self, method: str, endpoint: str, **kwargs: Any) -> Any:
         """Make HTTP request with error handling."""
         try:
             response = self.client.request(method, endpoint, **kwargs)
@@ -36,7 +37,7 @@ class ImageDefinitionsClient:
             sys.exit(1)
 
     # Product Groups
-    def list_product_groups(self):
+    def list_product_groups(self) -> None:
         """List all product groups."""
         groups = self._request("GET", "/product-groups")
 
@@ -60,7 +61,7 @@ class ImageDefinitionsClient:
 
         console.print(table)
 
-    def create_product_group(self, name: str, description: str = None):
+    def create_product_group(self, name: str, description: Optional[str] = None) -> None:
         """Create a new product group."""
         data = {"name": name}
         if description:
@@ -69,13 +70,13 @@ class ImageDefinitionsClient:
         result = self._request("POST", "/product-groups", json=data)
         console.print(f"[green]Created product group '{result['name']}'[/green]")
 
-    def delete_product_group(self, group_id: int):
+    def delete_product_group(self, group_id: int) -> None:
         """Delete a product group."""
         self._request("DELETE", f"/product-groups/{group_id}")
         console.print(f"[green]Deleted product group {group_id}[/green]")
 
     # Products
-    def list_products(self, product_group_id: int = None):
+    def list_products(self, product_group_id: Optional[int] = None) -> None:
         """List all products, optionally filtered by product group."""
         params = {}
         if product_group_id:
@@ -105,7 +106,9 @@ class ImageDefinitionsClient:
 
         console.print(table)
 
-    def create_product(self, name: str, product_group_id: int, version: str = None, description: str = None):
+    def create_product(
+        self, name: str, product_group_id: int, version: Optional[str] = None, description: Optional[str] = None
+    ) -> None:
         """Create a new product."""
         data = {"name": name, "product_group_id": product_group_id}
         if version:
@@ -117,7 +120,7 @@ class ImageDefinitionsClient:
         console.print(f"[green]Created product '{result['name']}'[/green]")
 
     # Variants
-    def list_variants(self, product_id: int = None):
+    def list_variants(self, product_id: Optional[int] = None) -> None:
         """List all variants, optionally filtered by product."""
         params = {}
         if product_id:
@@ -148,10 +151,12 @@ class ImageDefinitionsClient:
         console.print(table)
 
     # Artifacts
-    def list_artifacts(self, variant_id: int = None, artifact_type: str = None, status: str = None):
+    def list_artifacts(
+        self, variant_id: Optional[int] = None, artifact_type: Optional[str] = None, status: Optional[str] = None
+    ) -> None:
         """List all artifacts with optional filtering."""
-        params = {}
-        if variant_id:
+        params: Dict[str, Union[int, str]] = {}
+        if variant_id is not None:
             params["variant_id"] = variant_id
         if artifact_type:
             params["artifact_type"] = artifact_type
@@ -193,7 +198,7 @@ class ImageDefinitionsClient:
 
         console.print(table)
 
-    def get_artifact_stats(self):
+    def get_artifact_stats(self) -> None:
         """Show artifact statistics."""
         stats = self._request("GET", "/artifacts/stats/summary")
 
@@ -229,7 +234,7 @@ class ImageDefinitionsClient:
             console.print("\n[yellow]Total Size:[/yellow] 0 B")
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     parser = configargparse.ArgParser(description="Image Definitions CLI", default_config_files=[".env"])
 
@@ -319,7 +324,7 @@ def main():
 
         elif args.command == "artifacts":
             if args.artifacts_action == "list":
-                client.list_artifacts(args.variant_id, args.type, args.status)
+                client.list_artifacts(args.variant_id, getattr(args, "type"), args.status)
             elif args.artifacts_action == "stats":
                 client.get_artifact_stats()
             else:

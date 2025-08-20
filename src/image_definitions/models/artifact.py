@@ -34,7 +34,7 @@ class ArtifactStatus(str, Enum):
 class Artifact(Base):
     """A generated build artifact from a variant."""
 
-    __tablename__ = "artifacts"
+    __tablename__ = "artifacts"  # type: ignore[assignment]
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     artifact_type: Mapped[ArtifactType] = mapped_column(SQLEnum(ArtifactType), nullable=False, index=True)

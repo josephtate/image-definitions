@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -18,14 +18,14 @@ async def list_product_groups(
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Number of items to return"),
     db: AsyncSession = Depends(get_db),
-):
+) -> Sequence[ProductGroup]:
     """List all product groups."""
     result = await db.execute(select(ProductGroup).offset(skip).limit(limit).order_by(ProductGroup.created_at.desc()))
     return result.scalars().all()
 
 
 @router.get("/{product_group_id}", response_model=ProductGroupSchema)
-async def get_product_group(product_group_id: int, db: AsyncSession = Depends(get_db)):
+async def get_product_group(product_group_id: int, db: AsyncSession = Depends(get_db)) -> ProductGroup:
     """Get a specific product group by ID."""
     result = await db.execute(select(ProductGroup).where(ProductGroup.id == product_group_id))
     product_group = result.scalar_one_or_none()
@@ -37,7 +37,7 @@ async def get_product_group(product_group_id: int, db: AsyncSession = Depends(ge
 
 
 @router.post("/", response_model=ProductGroupSchema, status_code=201)
-async def create_product_group(product_group: ProductGroupCreate, db: AsyncSession = Depends(get_db)):
+async def create_product_group(product_group: ProductGroupCreate, db: AsyncSession = Depends(get_db)) -> ProductGroup:
     """Create a new product group."""
     # Check if name already exists
     result = await db.execute(select(ProductGroup).where(ProductGroup.name == product_group.name))
@@ -55,7 +55,7 @@ async def create_product_group(product_group: ProductGroupCreate, db: AsyncSessi
 @router.patch("/{product_group_id}", response_model=ProductGroupSchema)
 async def update_product_group(
     product_group_id: int, product_group_update: ProductGroupUpdate, db: AsyncSession = Depends(get_db)
-):
+) -> ProductGroup:
     """Update an existing product group."""
     result = await db.execute(select(ProductGroup).where(ProductGroup.id == product_group_id))
     db_product_group = result.scalar_one_or_none()
@@ -82,7 +82,7 @@ async def update_product_group(
 
 
 @router.delete("/{product_group_id}")
-async def delete_product_group(product_group_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_product_group(product_group_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, str]:
     """Delete a product group and all its products."""
     result = await db.execute(select(ProductGroup).where(ProductGroup.id == product_group_id))
     db_product_group = result.scalar_one_or_none()
@@ -97,7 +97,7 @@ async def delete_product_group(product_group_id: int, db: AsyncSession = Depends
 
 
 @router.get("/{product_group_id}/products")
-async def get_product_group_with_products(product_group_id: int, db: AsyncSession = Depends(get_db)):
+async def get_product_group_with_products(product_group_id: int, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     """Get a product group with all its products."""
     result = await db.execute(
         select(ProductGroup).options(selectinload(ProductGroup.products)).where(ProductGroup.id == product_group_id)

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class Architecture(Base):
     """An architecture configuration for a product (e.g., x86_64, aarch64)."""
 
-    __tablename__ = "architectures"
+    __tablename__ = "architectures"  # type: ignore[assignment]
 
     name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # x86_64, aarch64, etc.
     display_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Human-readable name
